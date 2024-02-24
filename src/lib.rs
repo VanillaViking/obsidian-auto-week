@@ -72,8 +72,11 @@ pub fn new_week(config: Config) -> Result<(), Error> {
     let start_of_week = end_of_week - Duration::days(6);
 
     let current_file = config.vault_dir.join("WEEK.canvas");
+    let current_list_file = config.vault_dir.join("weekly.md");
+
     let archive_dir = config.vault_dir.join(format!("archive/{} - {}/", start_of_week.format("%Y.%m.%d"), end_of_week.format("%Y.%m.%d")));
     let template = config.vault_dir.join("template/WEEK.canvas");
+    let list_template = config.vault_dir.join("template/template.md");
 
     let mut backlog = get_canvas(config.vault_dir.join("WEEK.canvas"))?;
 
@@ -85,7 +88,10 @@ pub fn new_week(config: Config) -> Result<(), Error> {
     fs::create_dir_all(&archive_dir)?;
     
     fs::rename(&current_file, archive_dir.join("WEEK.canvas"))?;
+    fs::rename(&current_list_file, archive_dir.join("weekly.md"))?;
+
     fs::copy(template, current_file)?;
+    fs::copy(list_template, current_list_file)?;
 
     let mut new_canvas = get_canvas(config.vault_dir.join("WEEK.canvas"))?;
     new_canvas = new_canvas + backlog;
@@ -101,7 +107,7 @@ pub fn new_week(config: Config) -> Result<(), Error> {
 fn get_canvas(path: PathBuf) -> Result<Canvas, Error> {
     let canvas_str = fs::read_to_string(path)?;
 
-    let canvas: Canvas = serde_json::from_str(&canvas_str).unwrap();
+    let canvas: Canvas = serde_json::from_str(&canvas_str)?;
 
     Ok(canvas)
 }
