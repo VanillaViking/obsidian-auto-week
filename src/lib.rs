@@ -74,32 +74,31 @@ pub fn new_week(config: Config) -> Result<(), Error> {
     let current_file = config.vault_dir.join("WEEK.canvas");
     let current_list_file = config.vault_dir.join("weekly.md");
 
-    let archive_dir = config.vault_dir.join(format!("archive/{} - {}/", start_of_week.format("%Y.%m.%d"), end_of_week.format("%Y.%m.%d")));
-    let template = config.vault_dir.join("template/WEEK.canvas");
-    let list_template = config.vault_dir.join("template/template.md");
-
+    let archive_dir = config.vault_dir.join(format!(".archive/{} - {}/", start_of_week.format("%Y.%m.%d"), end_of_week.format("%Y.%m.%d")));
+    fs::create_dir_all(&archive_dir)?;
+    
+    // CANVAS
+    let template = config.vault_dir.join(".template/WEEK.canvas");
     let mut backlog = get_canvas(config.vault_dir.join("WEEK.canvas"))?;
-
     backlog.nodes.retain(|n| {
         n.node_type == "text" && n.x < -1300
     });
 
-
-    fs::create_dir_all(&archive_dir)?;
-    
     fs::rename(&current_file, archive_dir.join("WEEK.canvas"))?;
-    fs::rename(&current_list_file, archive_dir.join("weekly.md"))?;
-
     fs::copy(template, current_file)?;
-    fs::copy(list_template, current_list_file)?;
 
     let mut new_canvas = get_canvas(config.vault_dir.join("WEEK.canvas"))?;
     new_canvas = new_canvas + backlog;
-
     let canvas_str = serde_json::to_string(&new_canvas)?;
-
     fs::write(config.vault_dir.join("WEEK.canvas"), canvas_str).expect("Unable to write new canvas");
-
+    
+    // LIST
+    let unchecked_items: String = fs::read_to_string(&current_list_file)?.lines()
+                                    .filter(|line| line.contains("- [ ]"))
+                                    .map(|line| line.to_owned() + "\n").collect();
+    let list_template: String = fs::read_to_string(config.vault_dir.join(".template/template.md"))?;
+    fs::rename(&current_list_file, archive_dir.join("weekly.md"))?;
+    fs::write(current_list_file, list_template + &unchecked_items)?;
 
     Ok(())
 }
