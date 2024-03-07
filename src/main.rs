@@ -14,6 +14,7 @@ fn main() {
 
     let result = match config.command.as_str() {
         "new" => auto_week::new_week(config),
+        "sort" => auto_week::sort_checklist(config),
         _ => Ok(())
     };
 

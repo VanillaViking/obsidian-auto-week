@@ -111,3 +111,20 @@ fn get_canvas(path: PathBuf) -> Result<Canvas, Error> {
     Ok(canvas)
 }
 
+pub fn sort_checklist(config: Config) -> Result<(), Error> {
+    let checklist_file = config.vault_dir.join("weekly.md");
+
+    let unchecked_items: String = fs::read_to_string(&checklist_file)?.lines()
+                                    .filter(|line| line.contains("- [ ]"))
+                                    .map(|line| line.to_owned() + "\n").collect();
+
+    let checked_items: String = fs::read_to_string(&checklist_file)?.lines()
+                                    .filter(|line| line.contains("- [x]"))
+                                    .map(|line| line.to_owned() + "\n").collect();
+
+    fs::write(checklist_file, unchecked_items + &checked_items)?;
+
+    Ok(())
+
+}
+
